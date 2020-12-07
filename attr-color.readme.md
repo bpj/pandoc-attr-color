@@ -56,7 +56,7 @@ RGB formats need to be quoted because of the `#` character.
 | [Foo]{fg=red fr=blue}            | `{\color{blue}\fbox{\textcolor{red}{Foo\strut}}}`
 | [Foo]{fr=red}                    | `{\colorlet{curcolor}{.}\color{red}\fbox{\color{curcolor}Foo\strut}}`
 
-![Rendered example](attr-color.png)
+![Rendered example](https://imgur.com/a/nR2NIof)
 
 As you can see the LaTeX for frames without background color is a hack. It
 could certainly be wrapped in a command, but in that case it would be necessary
