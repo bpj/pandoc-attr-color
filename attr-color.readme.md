@@ -91,7 +91,7 @@ Pandoc variables since the two methods clash.
 
 ## Bugs
 
-Report them at
+Report them at [the gist][]
 
 ## Author and license
 
@@ -109,3 +109,4 @@ http://www.opensource.org/licenses/mit-license.php
 [adjustbox]: http://texdoc.net/pkg/adjustbox
 [hyperref]: http://texdoc.net/pkg/hyperref
 [update to the latest]: https://github.com/jgm/pandoc/releases
+[the gist]: https://git.io/JI4yA
