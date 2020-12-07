@@ -27,8 +27,8 @@ The value of the attributes should be one of
 | `ColorName` | [xcolor][] color name.
 
 A `ColorName` should be a color name from one of the predefined [xcolor][]
-named color sets (described in an appendix of the *xcolor*
-documentation) loaded by Pandoc's `latex` template (unless you want to go
+named color sets (described in the section of the *xcolor*
+documentation called *Colors By Name*) loaded by Pandoc's `latex` template (unless you want to go
 through the hassle of injecting your own color definitions into the LaTeX
 preamble!), such as `ForestGreen`.
 
