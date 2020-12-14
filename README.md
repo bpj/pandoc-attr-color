@@ -5,7 +5,7 @@ on Span and Link elements based on custom Pandoc attributes.
 
 ## Version
 
-This document describes version 2020121417 of the filter.
+This document describes version 2020121418 of the filter.
 
 ## Usage
 
@@ -180,7 +180,7 @@ other Pandoc variables since the two methods clash.
 
 ## Bugs
 
-Report them at [the gist][]
+Report them at <https://github.com/bpj/pandoc-attr-color/issues>
 
 ## Author and license
 
@@ -200,4 +200,3 @@ http://www.opensource.org/licenses/mit-license.php
   [adjustbox]: http://texdoc.net/pkg/adjustbox
   [hyperref]: http://texdoc.net/pkg/hyperref
   [update to the latest]: https://github.com/jgm/pandoc/releases
-  [the gist]: https://git.io/JI4yA

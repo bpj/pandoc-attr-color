@@ -6,11 +6,11 @@ Span and Link elements based on Pandoc attributes.
 
 ## Version
 
-This is version 2020121417 of the filter.
+This is version 2020121418 of the filter.
 
 ## Usage
 
-See https://git.io/JI4yA
+See https://github.com/bpj/pandoc-attr-color
 
 ## License
 
