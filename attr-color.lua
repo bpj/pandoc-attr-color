@@ -1,8 +1,12 @@
 --[==============================[
 # attr-color.lua
 
-A Pandoc filter which sets LaTeX text/background/frame color(s) on
-Span and Div elements based on Pandoc attributes.
+A Pandoc filter which sets text/background/frame color(s) on
+Span and Link elements based on Pandoc attributes.
+
+## Version
+
+This is version 2020121417 of the filter.
 
 ## Usage
 
@@ -46,6 +50,14 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 --]==============================]
 
+-- This sets the defaults in case metadata/environment variables are unset
+-- Feel free to change these in your local copy if you can find a good reason.
+local config = {
+  format = FORMAT,          -- (string) defaults to Pandoc's current output format
+  keep_attrs = false,       -- must be a boolean
+  fallback_format = 'html', -- string
+}
+
 -- local dump = require"pl.pretty".dump -- for debugging
 
 -- assert with format string
@@ -54,9 +66,23 @@ local function assertf (val, msg, ...)
   error(msg:format(...))
 end
 
+-- Fall back to another value if a value is nil
+local function if_nil (a,b)
+  if nil == a then return b else return a end
+end
+
+-- Get the keys of a table as an array
+local function keys_of (tab)
+  local keys = {}
+  for k in pairs(tab) do
+    keys[#keys+1] = k
+  end
+  return keys
+end
+
 local rrggbb_keys = {'rr','gg','bb'}
 local rgb_keys = {'r','g','b'}
-local pats = {
+local color_pats = {
   { keys = rrggbb_keys, pat = '^%#(%x%x)(%x%x)(%x%x)$' },
   { keys = rgb_keys, pat = '^%#(%x)(%x)(%x)$' },
   { keys = {'name'}, pat = '^(%a%w*)$' },
@@ -64,7 +90,7 @@ local pats = {
 
 local color_attrs = {'fg','bg','fr'}
 
-local tex_fmt = {
+local latex_fmt = {
   fcolorbox = {
     pre  = '\\fcolorbox@(fr)@(bg){',
     post = '}',
@@ -95,9 +121,20 @@ local tex_fmt = {
   },
 }
 
-local function color2tex (name,value)
+local css_fmt = {
+  fg = 'color: @(fg);',
+  bg = 'background-color: @(bg);',
+  fr = 'border: 0.01em solid @(fr);',
+}
+
+local css_pad = {
+  bg = true,
+  fr = true,
+}
+
+local function color2latex (name,value)
   local color
-  for _,p in ipairs(pats) do
+  for _,p in ipairs(color_pats) do
     local match = { value:match(p.pat) }
     if #match > 0 then
       for i,k in ipairs(p.keys) do
@@ -138,7 +175,7 @@ end
 
 -- Generate the xcolor commands to 'wrap' around
 -- the span contents according to which color attributes we found
-local function make_tex (colors)
+local function make_latex (colors)
   -- The return values are two strings of raw LaTeX
   -- to put before and after the span contents.
   -- We always include a \strut to make sure that
@@ -160,7 +197,7 @@ local function make_tex (colors)
   end
   for _,com in ipairs(coms) do
     local com = assertf(
-      tex_fmt[com],
+      latex_fmt[com],
       "No format for command: %s", com
     )
     pre[#pre+1] = interp(com.pre, colors)
@@ -171,25 +208,111 @@ local function make_tex (colors)
   return pre, post
 end
 
+local function add_style (elem, colors)
+  local style = {}
+  for k,v in pairs(css_pad) do
+    if colors[k] then
+      style[#style+1] = 'padding: 0.1em;'
+      break
+    end
+  end
+  for _,attr in ipairs(color_attrs) do
+    if colors[attr] then
+      style[#style+1] = interp(css_fmt[attr], colors)
+    end
+  end
+  if #style > 0 then
+    style = table.concat(style, " ")
+    if elem.attributes.style then
+      elem.attributes.style = elem.attributes.style:gsub(';?%s*$', "; ")
+    else
+      elem.attributes.style = ""
+    end
+    elem.attributes.style = elem.attributes.style .. style
+    return elem
+  end
+  return nil
+end
+
+-- TODO: support ConTeXt if I can find out how to do frame and background on the fly.
+formats = {
+  latex = {
+    name = 'latex',
+    make_color  = color2latex,
+    make_markup = make_latex,
+  },
+  html = {
+    name = 'html',
+    modify_elem = add_style,
+  },
+}
+
+-- for _,key in ipairs{'html4', 'html5'} do
+--   formats[key] = formats[html]
+-- end
+
 local function color_span (elem)
+  local format = formats[config.format] or formats[config.fallback_format]
+  if not format then return nil end
   local colors
   for _,name in ipairs(color_attrs) do
     value = elem.attributes[name]
     if value then
       colors = colors or {}
-      colors[name] = color2tex(name,value)
+      if format.make_color then
+        colors[name] = format.make_color(name,value)
+      else
+        colors[name] = value
+      end
+      if not config.keep_attrs then
+        elem.attributes[name] = nil
+      end
     end
   end
   if colors then
-    local pre, post = make_tex(colors)
-    return{
-      pandoc.RawInline('latex', pre),
-      elem,
-      pandoc.RawInline('latex', post),
-    }
+    if format.make_markup then
+      local pre, post = format.make_markup(colors)
+      return{
+        pandoc.RawInline(format.name, pre),
+        elem,
+        pandoc.RawInline(format.name, post),
+      }
+    elseif format.modify_elem then
+      return format.modify_elem(elem, colors)
+    end
   end
   return nil
 end
+
+local str2bool = {
+  ['true'] = true,
+  ['false'] = false,
+}
+
+local function get_config (meta)
+  for _,key in ipairs(keys_of(config)) do
+    local dflt = config[key]
+    meta_key = "attr_color_" .. key
+    env = "PDC_ATTR_COLOR_" .. key:upper()
+    val = if_nil(meta[meta_key], os.getenv(env))
+    if nil ~= val then
+      if 'table' == type(val) then
+        val = pandoc.utils.stringify(val)
+      end
+      if 'boolean' == type(dflt) then
+        val = str2bool[tostring(val):lower()]
+        assertf(
+          ('boolean' == type(val)),
+          "Expected meta.%s or env %s to be 'true' or 'false'", meta_key, env
+        )
+      end
+      config[key] = val
+    end
+  end
+  return nil
+end
+
+
 
 -- -- for debugging without pandoc
 -- local read = require"pl.pretty".read
@@ -197,15 +320,17 @@ end
 --   colors = assert(read(line))
 --   for _,name in ipairs(color_attrs) do
 --     if colors[name] then
---       colors[name] = color2tex(name, colors[name])
+--       colors[name] = color2latex(name, colors[name])
 --     end
 --   end
 --   print(line)
---   print( make_tex(colors) )
+--   print( make_latex(colors) )
 -- end
 
 return {
-  { Span = color_span },
-  { Link = color_span },
+  { Meta = get_config },
+  { Span = color_span,
+    Link = color_span,
+  },
 }
 
