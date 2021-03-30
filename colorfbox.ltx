@@ -1,0 +1,51 @@
+% TODO: Check that the braces are properly balanced!
+\NewDocumentCommand{\colorfbox}{ o m m }{%
+  \IfNoValueTF{#1}%
+    {{\colorlet{curcolor}{.}\color{#2}\fbox{\color{curcolor}#3}}}%
+    {{\colorlet{curcolor}{.}\color{#2}\fbox{\color[#1]{curcolor}#3}}}%
+}
+
+\NewDocumentCommand{\textcolorfbox}{ o m o m m }{%
+  \IfNoValueTF{#1}{%
+    \IfNoValueTF{#3}%
+      {{\color{#2}\fbox{\textcolor{#4}{#5}}}}%
+      {{\color{#2}\fbox{\textcolor[#3]{#4}{#5}}}}%
+  }{%
+    \IfNoValueTF{#3}%
+      {{\color[#1]{#2}\fbox{\textcolor{#4}{#5}}}}%
+      {{\color[#1]{#2}\fbox{\textcolor[#3]{#4}{#5}}}}%
+}
+
+\NewDocumentCommand{\textcolorbox}{ o m o m m }{%
+  \IfNoValueTF{#1}{%
+    \IfNoValueTF{#3}%
+      {\colorbox{#2}{\textcolor{#4}{#5}}}%
+      {\colorbox{#2}{\textcolor[#3]{#4}{#5}}}%
+  }{%
+    \IfNoValueTF{#3}%
+      {\colorbox[#1]{#2}{\textcolor{#4}{#5}}}%
+      {\colorbox[#1]{#2}{\textcolor[#3]{#4}{#5}}}%
+  }%
+}
+
+\NewDocumentCommand{\textfcolorbox}{ o m o m o m m }{%
+  \IfNoValueTF{#1}{%1
+    \IfNoValueTF{#3}{%3
+      \IfNoValueTF{#5}%5
+        {\colorbox{#2}{\textcolor{#6}{#7}}}%
+        {\colorbox{#2}{\textcolor[#5]{#6}{#7}}}%
+      }{%
+        \IfNoValueTF{#5}%
+          {\colorbox[#1]{#2}{\textcolor{#6}{#7}}}%
+          {\colorbox[#1]{#2}{\textcolor[#5]{#6}{#7}}}%
+      }%
+    }{%
+        {\colorbox{#2}{\textcolor{#6}{#7}}}%
+        {\colorbox{#2}{\textcolor[#5]{#6}{#7}}}%
+    }{%
+      \IfNoValueTF{#5}%
+        {\colorbox[#1]{#2}{\textcolor{#6}{#7}}}%
+        {\colorbox[#1]{#2}{\textcolor[#5]{#6}{#7}}}%
+    }%
+  }%
+}
